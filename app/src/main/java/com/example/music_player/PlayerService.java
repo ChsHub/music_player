@@ -1,11 +1,8 @@
 package com.example.music_player;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -26,6 +23,7 @@ public class PlayerService extends Service {
         super.onCreate();
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String input = intent.getStringExtra("inputExtra");
@@ -33,21 +31,20 @@ public class PlayerService extends Service {
         // Open activity when clicking on notification
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Get sound URI and Attributes for channel
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Example Service Channel",NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(serviceChannel);
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle("@string/button_start") //TODO set string
+                    .setContentText(input)
+                    .setSmallIcon(R.drawable.ic_home_black_24dp)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true)
+                    .build();
 
+            startForeground(1, notification); // Notification Identifier >0; for updating notification
         }
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("@string/button_start") //TODO set string
-                .setContentText(input)
-                .setSmallIcon(R.drawable.ic_home_black_24dp)
-                .setContentIntent(pendingIntent)
-                .setSound(null) //TODO remove sound
-                .build();
-        startForeground(1, notification); // Notification Identifier >0; for updating notification
+
         //do heavy work on a background thread
         //stopSelf();
 
@@ -60,8 +57,7 @@ public class PlayerService extends Service {
      * Play audio file
      * @param path Audio file path
      */
-    public void startPlayer(String path)
-    {
+    public void startPlayer(String path) {
         // Creating file is needed for MediaPlayer
         File file = new File(path);
         if (!file.exists()) {

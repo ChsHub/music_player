@@ -1,11 +1,17 @@
 package com.example.music_player;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -16,27 +22,53 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+
+import static android.util.Log.e;
 
 public class MainActivity extends AppCompatActivity {
     public static final String CHANNEL_ID = "exampleServiceChannel";
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 0;
-    private static String[] PERMISSIONS_STORAGE = {
+    private static final String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    public static File getCacheFile(Context context) {
+        String path = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.notification2).toString();
+        File cacheFile = new File(context.getCacheDir(), path);
+        try {
+            InputStream inputStream = context.getAssets().open(path);
+            try {
+                FileOutputStream outputStream = new FileOutputStream(cacheFile);
+                try {
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = inputStream.read(buf)) > 0) {
+                        outputStream.write(buf, 0, len);
+                    }
+                } finally {
+                    outputStream.close();
+                }
+            } finally {
+                inputStream.close();
+            }
+        } catch (IOException e) {
+            e("MainActivity", "FILE NOT FOUND");
+        }
+        return cacheFile;
+    }
 
     /**
      * Checks if the app has permission to write to device storage.
      * If the app does not has permission then the user will be prompted to grant permissions.
      */
     public void verifyStoragePermissions() {
-        // Check if we have write permission
-        //int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-
-       // if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
         ActivityCompat.requestPermissions(
                 this,
                 PERMISSIONS_STORAGE,
@@ -47,16 +79,19 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * App Entry point
+     *
      * @param savedInstanceState
      */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Logger logger = new Logger();
+        //Logger logger = new Logger();
         BottomNavigationView navView = findViewById(R.id.nav_view);
 
         verifyStoragePermissions();
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
@@ -65,10 +100,20 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+
+        //Create Notification Channel
+        Uri notificationSound = Uri.parse("android.resource://" + this.getPackageName() + "/" + R.raw.notification2);
+        NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Example Service Channel", NotificationManager.IMPORTANCE_HIGH);
+        AudioAttributes audioAttributes = serviceChannel.getAudioAttributes();
+
+        serviceChannel.setSound(notificationSound, audioAttributes); // Can only be set before createNotificationChannel
+        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.createNotificationChannel(serviceChannel);
     }
 
     /**
      * On Start Button click, play the song
+     *
      * @param view
      */
     public void startService(View view) {
@@ -81,17 +126,17 @@ public class MainActivity extends AppCompatActivity {
         if (type != null) {
             if (Intent.ACTION_SEND.equals(action)) {
                 if (type.startsWith("audio/")) {
-                    audioExtra = handleSend(intent).getPath(); // Handle single image being sent
+                    audioExtra = handleSend(intent).getPath(); // Handle single audio being sent
                 }
             } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
                 if (type.startsWith("audio/")) {
-                    handleSendMultiple(intent); // Handle multiple images being sent
+                    handleSendMultiple(intent); // Handle multiple audio being sent
                 }
             }
         }
         if (Intent.ACTION_VIEW.equals(action)) {
-            Uri uri = intent.getData(); // Handle single image being sent
-            audioExtra = uri.getPath(); // Handle single image being sent
+            Uri uri = intent.getData();
+            audioExtra = uri.getPath();
         }
 
         // TODO handle different paths document/audio
