@@ -36,7 +36,8 @@
         <service
             android:name=".PlayerService"
             android:foregroundServiceType="mediaPlayback"
-            android:stopWithTask="true"/>
+            android:stopWithTask="true"
+            android:process=":remote"/> <!--Run in remote process-->
     </application>
 
 </manifest>

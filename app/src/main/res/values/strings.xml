@@ -5,4 +5,10 @@
     <string name="title_notifications">Notifications</string>
     <string name="button_start">Start</string>
     <string name="button_stop">Stop</string>
+    <string name="remote_service_connected">Remote service connected</string>
+    <string name="remote_service_disconnected">Remote service disconnected</string>
+    <string name="remote_service_started">Remote service started</string>
+    <string name="remote_service_stopped">Remote service stopped</string>
+    <string name="local_service_label">local_service_label</string>
+    <string name="audio_extra">audio_extra</string>
 </resources>
