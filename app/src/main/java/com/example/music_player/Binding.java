@@ -115,13 +115,19 @@ public class Binding extends AppCompatActivity
 
     void doBindService()
     {
+        if (mIsBound){
+            return;
+        }
         // Establish a connection with the service.  We use an explicit
         // class name because there is no reason to be able to let other
         // applications replace our component.
         bindService(new Intent(Binding.this, PlayerService.class),
                 mConnection, Context.BIND_AUTO_CREATE);
         mIsBound = true;
-        mCallbackText.setText("Binding.");
+        mCallbackText = (TextView) findViewById(R.id.test_text_view);
+        if (mCallbackText != null) {
+            mCallbackText.setText(R.string.callback_text);
+        }
     }
 
     void doUnbindService()

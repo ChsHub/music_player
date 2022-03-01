@@ -11,4 +11,5 @@
     <string name="remote_service_stopped">Remote service stopped</string>
     <string name="local_service_label">local_service_label</string>
     <string name="audio_extra">audio_extra</string>
+    <string name="callback_text">BINDING</string>
 </resources>

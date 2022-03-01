@@ -3,12 +3,14 @@ package com.example.music_player;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
@@ -21,6 +23,8 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import static android.util.Log.e;
@@ -104,7 +108,7 @@ public class MainActivity extends Binding
         String action = intent.getAction();
         String type = intent.getType();
         String audioExtra = "";
-
+        Uri uri = null;
 
         if (type != null) {
             if (Intent.ACTION_SEND.equals(action)) {
@@ -118,7 +122,7 @@ public class MainActivity extends Binding
             }
         }
         if (Intent.ACTION_VIEW.equals(action)) {
-            Uri uri = intent.getData();
+            uri = intent.getData();
             audioExtra = uri.getPath();
         }
 
@@ -128,9 +132,16 @@ public class MainActivity extends Binding
         }
         // Start music service, with attached intent
         if (!audioExtra.equals("")) {
-            playerIntent = new Intent(this, PlayerService.class);
-            playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
-            ContextCompat.startForegroundService(this, playerIntent);
+            try {
+                ParcelFileDescriptor fileDescriptor = ((ContentResolver) this.getContentResolver()).openFileDescriptor(uri, "r");
+                playerIntent = new Intent(this, PlayerService.class);
+                playerIntent.putExtra("inputExtra", fileDescriptor.getFd()); // Puts intent with audio path as extra
+                ContextCompat.startForegroundService(this, playerIntent);
+                doBindService(); // Bind service for communication
+
+            } catch (Exception error) {
+                e("startService", error.getMessage());
+            }
         }
     }
 
@@ -155,7 +166,6 @@ public class MainActivity extends Binding
     public void stopService(View v)
     {
     }
-
 
 
 }
