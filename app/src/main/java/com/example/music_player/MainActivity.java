@@ -130,18 +130,15 @@ public class MainActivity extends Binding
         if (audioExtra.contains("document/raw:")) {
             audioExtra = audioExtra.replace("/document/raw:", "");
         }
+        if (audioExtra.contains("/document/primary:")) {
+            audioExtra = audioExtra.replace("/document/primary:", "");
+        }
         // Start music service, with attached intent
         if (!audioExtra.equals("")) {
-            try {
-                ParcelFileDescriptor fileDescriptor = ((ContentResolver) this.getContentResolver()).openFileDescriptor(uri, "r");
-                playerIntent = new Intent(this, PlayerService.class);
-                playerIntent.putExtra("inputExtra", fileDescriptor.getFd()); // Puts intent with audio path as extra
-                ContextCompat.startForegroundService(this, playerIntent);
-                doBindService(); // Bind service for communication
-
-            } catch (Exception error) {
-                e("startService", error.getMessage());
-            }
+            playerIntent = new Intent(this, PlayerService.class);
+            playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
+            ContextCompat.startForegroundService(this, playerIntent);
+            doBindService(); // Bind service for communication
         }
     }
 
