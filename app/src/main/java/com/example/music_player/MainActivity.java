@@ -3,17 +3,20 @@ package com.example.music_player;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.ContentResolver;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioAttributes;
+import android.media.session.MediaController;
+import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
@@ -23,13 +26,9 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
-import static android.util.Log.e;
-
-public class MainActivity extends Binding
+public class MainActivity extends AppCompatActivity
 {
     public static final String CHANNEL_ID = "exampleServiceChannel";
     // Storage Permissions
@@ -38,7 +37,10 @@ public class MainActivity extends Binding
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
-    protected Intent playerIntent;
+    public MediaController mediaController;
+    //   MediaBrowser mediaBrowser; // Communicates with MediaBrowserService TODO
+    //
+
 
     /**
      * Checks if the app has permission to write to device storage.
@@ -95,6 +97,24 @@ public class MainActivity extends Binding
         NavigationUI.setupWithNavController(navView, navController);
 
         createNotificationChannel();
+        //Register broadcast receiver for receiving sessionToken
+        IntentFilter filter = new IntentFilter();
+        this.registerReceiver(new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                mediaController = new MediaController(context, (Token) intent.getParcelableExtra("sessionToken"));
+            }
+        }, filter);
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void connectPlayerService(Token token)
+    {
+        mediaController = new MediaController(this, token);
+        //mediaBrowser = new MediaBrowser(this, PlayerService.class,); TODO
     }
 
     /**
@@ -102,6 +122,7 @@ public class MainActivity extends Binding
      *
      * @param view
      */
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startService(View view)
     {
         Intent intent = getIntent();
@@ -109,6 +130,8 @@ public class MainActivity extends Binding
         String type = intent.getType();
         String audioExtra = "";
         Uri uri = null;
+        Intent playerIntent = new Intent(this, PlayerService.class);
+        ;
 
         if (type != null) {
             if (Intent.ACTION_SEND.equals(action)) {
@@ -124,6 +147,7 @@ public class MainActivity extends Binding
         if (Intent.ACTION_VIEW.equals(action)) {
             uri = intent.getData();
             audioExtra = uri.getPath();
+            playerIntent.putExtra("inputUri", uri);
         }
 
         // TODO handle different paths document/audio
@@ -135,11 +159,12 @@ public class MainActivity extends Binding
         }
         // Start music service, with attached intent
         if (!audioExtra.equals("")) {
-            playerIntent = new Intent(this, PlayerService.class);
+
             playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
             ContextCompat.startForegroundService(this, playerIntent);
-            doBindService(); // Bind service for communication
         }
+
+
     }
 
     Uri handleSend(Intent intent)
