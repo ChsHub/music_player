@@ -11,6 +11,7 @@ import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.service.media.MediaBrowserService;
 
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import androidx.core.app.NotificationCompat;
 import java.util.List;
 
 import static android.util.Log.e;
+import static android.util.Log.i;
 import static com.example.music_player.MainActivity.CHANNEL_ID;
 
 /***
@@ -56,9 +58,13 @@ public class PlayerService extends MediaBrowserService
         // https://developer.android.com/guide/topics/media-apps/working-with-a-media-session
         mediaSession = new MediaSession(getApplicationContext(), "MediaSession01");
         Token mediaSessionToken = mediaSession.getSessionToken();
+        // Send token
         Intent tokenIntent = new Intent();
         tokenIntent.putExtra("sessionToken", mediaSessionToken);
+        tokenIntent.setType("tokenType");
+        String tokenType = tokenIntent.getType();
         sendBroadcast(tokenIntent);
+        i("onCreate", "Broadcast sent");
     }
 
     @Nullable
@@ -73,6 +79,14 @@ public class PlayerService extends MediaBrowserService
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         Uri inputUri = intent.getParcelableExtra("inputUri");
+        setNotification(inputUri.getPath());
+        startPlayer(inputUri);
+
+        return START_STICKY; // START_STICKY for explicit start and stop of Service https://developer.android.com/reference/android/app/Service#START_STICKY
+    }
+
+    protected void setNotification(String songTitle)
+    {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         // Open activity when clicking on notification
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
@@ -81,8 +95,8 @@ public class PlayerService extends MediaBrowserService
             // Get sound URI and Attributes for channel
 
             Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setContentTitle("Now playing: " + inputUri.getPath()) //TODO set string
-                    .setContentText(inputUri.getPath())
+                    .setContentTitle("Now playing: " + songTitle) //TODO set string
+                    .setContentText(songTitle)
                     .setSmallIcon(R.drawable.ic_home_black_24dp)
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true)
@@ -90,15 +104,7 @@ public class PlayerService extends MediaBrowserService
 
             startForeground(1, notification); // Notification Identifier >0; for updating notification
         }
-
-        //        //do heavy work on a background thread
-        //stopSelf();
-
-        startPlayer(inputUri);
-
-        return START_STICKY; // START_STICKY for explicit start and stop of Service https://developer.android.com/reference/android/app/Service#START_STICKY
     }
-
 
     /***
      * Play audio file
@@ -107,6 +113,8 @@ public class PlayerService extends MediaBrowserService
     protected void startPlayer(Uri uri)
     {
         try {
+            if (mediaPlayer.isPlaying())
+                mediaPlayer.stop();
             mediaPlayer.setDataSource(getApplicationContext(), uri);
             mediaPlayer.prepare();
             mediaPlayer.setVolume(50, 50);
@@ -124,5 +132,12 @@ public class PlayerService extends MediaBrowserService
     public void onDestroy()
     {
         mediaSession.release(); // clean up the session and notify any controllers
+    }
+
+    @Override
+    public IBinder onBind(Intent intent)
+    {
+        i("onBind", "");
+        return new PlayerBinder();
     }
 }
