@@ -2,6 +2,7 @@ package com.example.music_player;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
@@ -11,8 +12,12 @@ import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.service.media.MediaBrowserService;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +41,40 @@ public class PlayerService extends MediaBrowserService
 {
     MediaPlayer mediaPlayer;
     MediaSession mediaSession;
+    /**
+     * Target we publish for clients to send messages to IncomingHandler.
+     */
+    Messenger mMessenger;
+    /**
+     * Command to the service to display a message
+     */
+    static final int MSG_SAY_HELLO = 1;
+
+    /**
+     * Handler of incoming messages from clients.
+     */
+    static class IncomingHandler extends Handler
+    {
+        private Context applicationContext;
+
+        IncomingHandler(Context context)
+        {
+            applicationContext = context.getApplicationContext();
+        }
+
+        @Override
+        public void handleMessage(Message msg)
+        {
+            switch (msg.what) {
+                case MSG_SAY_HELLO:
+                    Toast.makeText(applicationContext, "hello!", Toast.LENGTH_SHORT).show();
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowser.MediaItem>> result)
@@ -72,17 +111,6 @@ public class PlayerService extends MediaBrowserService
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints)
     {
         return null;
-    }
-
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId)
-    {
-        Uri inputUri = intent.getParcelableExtra("inputUri");
-        setNotification(inputUri.getPath());
-        startPlayer(inputUri);
-
-        return START_STICKY; // START_STICKY for explicit start and stop of Service https://developer.android.com/reference/android/app/Service#START_STICKY
     }
 
     protected void setNotification(String songTitle)
@@ -137,7 +165,25 @@ public class PlayerService extends MediaBrowserService
     @Override
     public IBinder onBind(Intent intent)
     {
+        Uri inputUri = intent.getParcelableExtra("inputUri");
+        setNotification(inputUri.getPath());
+        startPlayer(inputUri);
+
         i("onBind", "");
-        return new PlayerBinder();
+        Toast.makeText(getApplicationContext(), "binding", Toast.LENGTH_SHORT).show();
+        mMessenger = new Messenger(new IncomingHandler(this));
+        return mMessenger.getBinder();
+    }
+
+
+    /**
+     * @param intent Intent that was used to bind to this service
+     * @return false - No onRebind(Intent) method later called when new clients bind to it
+     */
+    @Override
+    public boolean onUnbind(Intent intent)
+    {
+        mediaPlayer.release();
+        return false;
     }
 }

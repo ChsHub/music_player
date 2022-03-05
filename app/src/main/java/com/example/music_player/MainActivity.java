@@ -3,23 +3,19 @@ package com.example.music_player;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.media.AudioAttributes;
 import android.media.session.MediaController;
 import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -158,27 +154,11 @@ public class MainActivity extends AppCompatActivity
         if (!audioExtra.equals("")) {
 
             playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
-            ContextCompat.startForegroundService(this, playerIntent);
             // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
-            if (this.bindService(playerIntent, new ServiceConnection()
-            {
-                @Override
-                public void onServiceConnected(ComponentName name, IBinder service)
-                {
-                    i("onServiceConnected", "CONNECTED");
-                }
-
-                @Override
-                public void onServiceDisconnected(ComponentName name)
-                {
-
-                }
-            }, BIND_AUTO_CREATE)) {
+            if (this.bindService(playerIntent, new PlayerConnection(), BIND_AUTO_CREATE)) {
                 i("startService", "Service bound");
             }
         }
-
-
     }
 
     Uri handleSend(Intent intent)
