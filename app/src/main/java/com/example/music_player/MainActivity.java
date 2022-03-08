@@ -3,14 +3,20 @@ package com.example.music_player;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.media.AudioAttributes;
 import android.media.session.MediaController;
 import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
@@ -39,7 +45,40 @@ public class MainActivity extends AppCompatActivity
     public MediaController mediaController;
     //   MediaBrowser mediaBrowser; // Communicates with MediaBrowserService TODO
     //
+    /**
+     * Messenger for communicating with the service.
+     */
+    Messenger mService = null;
 
+    /**
+     * Flag indicating whether we have called bind on the service.
+     */
+    boolean bound;
+
+    /**
+     * Class for interacting with the main interface of the service.
+     */
+    private ServiceConnection mConnection = new ServiceConnection()
+    {
+        public void onServiceConnected(ComponentName className, IBinder service)
+        {
+            // This is called when the connection with the service has been
+            // established, giving us the object we can use to
+            // interact with the service.  We are communicating with the
+            // service using a Messenger, so here we get a client-side
+            // representation of that from the raw IBinder object.
+            mService = new Messenger(service);
+            bound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName className)
+        {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            mService = null;
+            bound = false;
+        }
+    };
 
     /**
      * Checks if the app has permission to write to device storage.
@@ -73,7 +112,8 @@ public class MainActivity extends AppCompatActivity
     /**
      * App Entry point
      *
-     * @param savedInstanceState
+     * @param savedInstanceState if the activity is being re-initialized after previously being
+     *                           shut down then this Bundle contains the data it most recently supplied
      */
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
@@ -113,7 +153,7 @@ public class MainActivity extends AppCompatActivity
     /**
      * On Start Button click, play the song
      *
-     * @param view
+     * @param view Button view object
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startService(View view)
@@ -122,9 +162,9 @@ public class MainActivity extends AppCompatActivity
         String action = intent.getAction();
         String type = intent.getType();
         String audioExtra = "";
-        Uri uri = null;
+        Uri uri;
         Intent playerIntent = new Intent(this, PlayerService.class);
-        ;
+
 
         if (type != null) {
             if (Intent.ACTION_SEND.equals(action)) {
@@ -155,18 +195,18 @@ public class MainActivity extends AppCompatActivity
 
             playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
             // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
-            if (this.bindService(playerIntent, new PlayerConnection(), BIND_AUTO_CREATE)) {
+            if (bindService(playerIntent, mConnection, BIND_AUTO_CREATE)) {
                 i("startService", "Service bound");
             }
         }
     }
 
-    Uri handleSend(Intent intent)
+    protected Uri handleSend(Intent intent)
     {
         return intent.getParcelableExtra(Intent.EXTRA_STREAM);
     }
 
-    void handleSendMultiple(Intent intent)
+    protected void handleSendMultiple(Intent intent)
     {
         ArrayList<Uri> audioURIs = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         if (audioURIs != null) {
@@ -177,11 +217,18 @@ public class MainActivity extends AppCompatActivity
     /**
      * TODO On Stop Button click, pause the song
      *
-     * @param v
+     * @param view Button view object
      */
-    public void stopService(View v)
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void stopService(View view)
     {
+        if (!bound) return;
+        // Create and send a message to the service, using a supported 'what' value
+        Message msg = Message.obtain(null, PlayerService.MSG_SAY_HELLO, 0, 0);
+        try {
+            mService.send(msg);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
-
-
 }
