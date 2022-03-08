@@ -45,15 +45,9 @@ public class MainActivity extends AppCompatActivity
     public MediaController mediaController;
     //   MediaBrowser mediaBrowser; // Communicates with MediaBrowserService TODO
     //
-    /**
-     * Messenger for communicating with the service.
-     */
-    Messenger mService = null;
 
-    /**
-     * Flag indicating whether we have called bind on the service.
-     */
-    boolean bound;
+    Messenger mService = null; // Messenger for communicating with the service.
+    boolean bound; // Flag indicating whether we have called bind on the service.
 
     /**
      * Class for interacting with the main interface of the service.
@@ -115,7 +109,6 @@ public class MainActivity extends AppCompatActivity
      * @param savedInstanceState if the activity is being re-initialized after previously being
      *                           shut down then this Bundle contains the data it most recently supplied
      */
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -139,11 +132,41 @@ public class MainActivity extends AppCompatActivity
 
 
         //mediaController = new MediaController(context, (Token) intent.getParcelableExtra("sessionToken")); TODO
-
-
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus)
+    {
+        if (hasFocus) {
+            Intent intent = getIntent();
+            Intent playerIntent = new Intent(this, PlayerService.class);
+            Uri uri = null;
+
+            switch (intent.getAction())
+            {
+                case Intent.ACTION_SEND:
+                    uri = handleSend(intent); // Handle single audio being sent
+                    break;
+                case Intent.ACTION_SEND_MULTIPLE:
+                    uri = handleSendMultiple(intent);
+                    break;
+                case Intent.ACTION_VIEW:
+                    uri = intent.getData();
+                    break;
+            }
+            if (uri != null)
+            {
+                // Start music service, with attached intent
+                // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
+                playerIntent.putExtra("inputUri", uri);
+                if (bindService(playerIntent, mConnection, BIND_AUTO_CREATE)) {
+                    i("startService", "Service bound");
+                }
+            }
+        }
+    }
+
+
     private void connectPlayerService(Token token)
     {
         mediaController = new MediaController(this, token);
@@ -155,50 +178,9 @@ public class MainActivity extends AppCompatActivity
      *
      * @param view Button view object
      */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void startService(View view)
     {
-        Intent intent = getIntent();
-        String action = intent.getAction();
-        String type = intent.getType();
-        String audioExtra = "";
-        Uri uri;
-        Intent playerIntent = new Intent(this, PlayerService.class);
-
-
-        if (type != null) {
-            if (Intent.ACTION_SEND.equals(action)) {
-                if (type.startsWith("audio/")) {
-                    audioExtra = handleSend(intent).getPath(); // Handle single audio being sent
-                }
-            } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-                if (type.startsWith("audio/")) {
-                    handleSendMultiple(intent); // Handle multiple audio being sent
-                }
-            }
-        }
-        if (Intent.ACTION_VIEW.equals(action)) {
-            uri = intent.getData();
-            audioExtra = uri.getPath();
-            playerIntent.putExtra("inputUri", uri);
-        }
-
-        // TODO handle different paths document/audio
-        if (audioExtra.contains("document/raw:")) {
-            audioExtra = audioExtra.replace("/document/raw:", "");
-        }
-        if (audioExtra.contains("/document/primary:")) {
-            audioExtra = audioExtra.replace("/document/primary:", "");
-        }
-        // Start music service, with attached intent
-        if (!audioExtra.equals("")) {
-
-            playerIntent.putExtra("inputExtra", audioExtra); // Puts intent with audio path as extra
-            // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
-            if (bindService(playerIntent, mConnection, BIND_AUTO_CREATE)) {
-                i("startService", "Service bound");
-            }
-        }
+        sendPlayerServiceMessage(IncomingHandler.MESSAGE_START_PLAYER);
     }
 
     protected Uri handleSend(Intent intent)
@@ -206,12 +188,13 @@ public class MainActivity extends AppCompatActivity
         return intent.getParcelableExtra(Intent.EXTRA_STREAM);
     }
 
-    protected void handleSendMultiple(Intent intent)
+    protected Uri handleSendMultiple(Intent intent)
     {
         ArrayList<Uri> audioURIs = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         if (audioURIs != null) {
             // TODO Update UI to reflect multiple files
         }
+        return null;
     }
 
     /**
@@ -219,12 +202,16 @@ public class MainActivity extends AppCompatActivity
      *
      * @param view Button view object
      */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public void stopService(View view)
+    {
+        sendPlayerServiceMessage(IncomingHandler.MESSAGE_STOP_PLAYER);
+    }
+
+    protected void sendPlayerServiceMessage(int message)
     {
         if (!bound) return;
         // Create and send a message to the service, using a supported 'what' value
-        Message msg = Message.obtain(null, PlayerService.MSG_SAY_HELLO, 0, 0);
+        Message msg = Message.obtain(null, message, 0, 0);
         try {
             mService.send(msg);
         } catch (RemoteException e) {

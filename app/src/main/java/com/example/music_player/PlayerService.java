@@ -2,7 +2,6 @@ package com.example.music_player;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
@@ -12,9 +11,7 @@ import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Messenger;
 import android.service.media.MediaBrowserService;
 import android.widget.Toast;
@@ -41,39 +38,15 @@ public class PlayerService extends MediaBrowserService
 {
     MediaPlayer mediaPlayer;
     MediaSession mediaSession;
+    String currentTrackName;
     /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
     Messenger mMessenger;
+
     /**
      * Command to the service to display a message
      */
-    static final int MSG_SAY_HELLO = 1;
-
-    /**
-     * Handler of incoming messages from clients.
-     */
-    static class IncomingHandler extends Handler
-    {
-        private Context applicationContext;
-
-        IncomingHandler(Context context)
-        {
-            applicationContext = context.getApplicationContext();
-        }
-
-        @Override
-        public void handleMessage(Message msg)
-        {
-            switch (msg.what) {
-                case MSG_SAY_HELLO:
-                    Toast.makeText(applicationContext, "hello!", Toast.LENGTH_SHORT).show();
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
 
 
     @Override
@@ -97,13 +70,11 @@ public class PlayerService extends MediaBrowserService
         // https://developer.android.com/guide/topics/media-apps/working-with-a-media-session
         mediaSession = new MediaSession(getApplicationContext(), "MediaSession01");
         Token mediaSessionToken = mediaSession.getSessionToken();
-        // Send token
+        // TODO Send token
         Intent tokenIntent = new Intent();
         tokenIntent.putExtra("sessionToken", mediaSessionToken);
         tokenIntent.setType("tokenType");
         String tokenType = tokenIntent.getType();
-        sendBroadcast(tokenIntent);
-        i("onCreate", "Broadcast sent");
     }
 
     @Nullable
@@ -119,42 +90,51 @@ public class PlayerService extends MediaBrowserService
         // Open activity when clicking on notification
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Get sound URI and Attributes for channel
 
-            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setContentTitle("Now playing: " + songTitle) //TODO set string
-                    .setContentText(songTitle)
-                    .setSmallIcon(R.drawable.ic_home_black_24dp)
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true)
-                    .build();
+        // Get audio URI and Attributes for channel
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Now playing: " + songTitle) //TODO set string
+                .setContentText(songTitle)
+                .setSmallIcon(R.drawable.ic_home_black_24dp)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build();
 
-            startForeground(1, notification); // Notification Identifier >0; for updating notification
-        }
+        startForeground(1, notification); // Notification Identifier >0; for updating notification
+
     }
 
     /***
      * Play audio file
      * @param uri Audio file path
      */
-    protected void startPlayer(Uri uri)
+    protected void initPlayer(Uri uri)
     {
         try {
-            if (mediaPlayer.isPlaying())
+            if (mediaPlayer.isPlaying()) {
                 mediaPlayer.stop();
+            }
             mediaPlayer.setDataSource(getApplicationContext(), uri);
             mediaPlayer.prepare();
             mediaPlayer.setVolume(50, 50);
-            mediaPlayer.start();
         } catch (Exception exception) {
             e("startPlayer", exception.getMessage());
         }
     }
 
-    protected void stopPlayer()
+    public void startPlayer()
     {
-        mediaPlayer.stop();
+        if (!mediaPlayer.isPlaying()) {
+            setNotification(currentTrackName);
+            mediaPlayer.start();
+        }
+    }
+
+    public void stopPlayer()
+    {
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+        }
     }
 
     public void onDestroy()
@@ -166,8 +146,8 @@ public class PlayerService extends MediaBrowserService
     public IBinder onBind(Intent intent)
     {
         Uri inputUri = intent.getParcelableExtra("inputUri");
-        setNotification(inputUri.getPath());
-        startPlayer(inputUri);
+        currentTrackName = inputUri.getPath();
+        initPlayer(inputUri);
 
         i("onBind", "");
         Toast.makeText(getApplicationContext(), "binding", Toast.LENGTH_SHORT).show();
