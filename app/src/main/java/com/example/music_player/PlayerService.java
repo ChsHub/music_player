@@ -39,6 +39,7 @@ public class PlayerService extends MediaBrowserService
     MediaPlayer mediaPlayer;
     MediaSession mediaSession;
     String currentTrackName;
+    static final String URI_EXTRA = "inputUri";
     /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
@@ -70,6 +71,7 @@ public class PlayerService extends MediaBrowserService
         // https://developer.android.com/guide/topics/media-apps/working-with-a-media-session
         mediaSession = new MediaSession(getApplicationContext(), "MediaSession01");
         Token mediaSessionToken = mediaSession.getSessionToken();
+
         // TODO Send token
         Intent tokenIntent = new Intent();
         tokenIntent.putExtra("sessionToken", mediaSessionToken);
@@ -145,7 +147,7 @@ public class PlayerService extends MediaBrowserService
     @Override
     public IBinder onBind(Intent intent)
     {
-        Uri inputUri = intent.getParcelableExtra("inputUri");
+        Uri inputUri = intent.getParcelableExtra(URI_EXTRA);
         currentTrackName = inputUri.getPath();
         initPlayer(inputUri);
 

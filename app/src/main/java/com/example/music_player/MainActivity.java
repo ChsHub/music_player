@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.AudioAttributes;
+import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
 import android.media.session.MediaSession.Token;
 import android.net.Uri;
@@ -158,7 +159,7 @@ public class MainActivity extends AppCompatActivity
             {
                 // Start music service, with attached intent
                 // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
-                playerIntent.putExtra("inputUri", uri);
+                playerIntent.putExtra(PlayerService.URI_EXTRA, uri);
                 if (bindService(playerIntent, mConnection, BIND_AUTO_CREATE)) {
                     i("startService", "Service bound");
                 }
