@@ -3,8 +3,7 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
-    <string name="button_start">Start</string>
-    <string name="button_stop">Stop</string>
+    <string name="button_play">Start/Stop</string>
     <string name="remote_service_connected">Remote service connected</string>
     <string name="remote_service_disconnected">Remote service disconnected</string>
     <string name="remote_service_started">Remote service started</string>

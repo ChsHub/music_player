@@ -124,18 +124,13 @@ public class PlayerService extends MediaBrowserService
         }
     }
 
-    public void startPlayer()
-    {
-        if (!mediaPlayer.isPlaying()) {
-            setNotification(currentTrackName);
-            mediaPlayer.start();
-        }
-    }
-
-    public void stopPlayer()
+    public void togglePlayer()
     {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
+        } else {
+            setNotification(currentTrackName);
+            mediaPlayer.start();
         }
     }
 

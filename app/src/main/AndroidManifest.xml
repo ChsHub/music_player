@@ -32,7 +32,7 @@
                 <data android:scheme="file" />
                 <data android:scheme="content" />
                 <data android:mimeType="audio/*" />
-                <data android:mimeType="audio/opus" />
+                <data android:mimeType="*/opus" />
             </intent-filter>
         </activity>
         <service

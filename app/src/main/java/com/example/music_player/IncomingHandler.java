@@ -1,6 +1,5 @@
 package com.example.music_player;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 
@@ -9,8 +8,7 @@ import android.os.Message;
  */
 class IncomingHandler extends Handler
 {
-    static final int MESSAGE_START_PLAYER = 2;
-    static final int MESSAGE_STOP_PLAYER = 3;
+    static final int MESSAGE_TOGGLE_PLAYER = 2;
     private final PlayerService playerService;
 
     IncomingHandler(PlayerService context)
@@ -22,11 +20,8 @@ class IncomingHandler extends Handler
     public void handleMessage(Message msg)
     {
         switch (msg.what) {
-            case MESSAGE_START_PLAYER:
-                playerService.startPlayer();
-                break;
-            case MESSAGE_STOP_PLAYER:
-                playerService.stopPlayer();
+            case MESSAGE_TOGGLE_PLAYER:
+                playerService.togglePlayer();
                 break;
             default:
                 super.handleMessage(msg);

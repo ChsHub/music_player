@@ -10,14 +10,8 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="startService"
-        android:text="@string/button_start" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="stopService"
-        android:text="@string/button_stop" />
+        android:onClick="togglePlayback"
+        android:text="@string/button_play" />
 
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.AudioAttributes;
-import android.media.browse.MediaBrowser;
 import android.media.session.MediaController;
 import android.media.session.MediaSession.Token;
 import android.net.Uri;
@@ -179,9 +178,9 @@ public class MainActivity extends AppCompatActivity
      *
      * @param view Button view object
      */
-    public void startService(View view)
+    public void togglePlayback(View view)
     {
-        sendPlayerServiceMessage(IncomingHandler.MESSAGE_START_PLAYER);
+        sendPlayerServiceMessage(IncomingHandler.MESSAGE_TOGGLE_PLAYER);
     }
 
     protected Uri handleSend(Intent intent)
@@ -196,16 +195,6 @@ public class MainActivity extends AppCompatActivity
             // TODO Update UI to reflect multiple files
         }
         return null;
-    }
-
-    /**
-     * TODO On Stop Button click, pause the song
-     *
-     * @param view Button view object
-     */
-    public void stopService(View view)
-    {
-        sendPlayerServiceMessage(IncomingHandler.MESSAGE_STOP_PLAYER);
     }
 
     protected void sendPlayerServiceMessage(int message)
