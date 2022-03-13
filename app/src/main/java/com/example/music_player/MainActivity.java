@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity
     protected void createNotificationChannel()
     {
 
-        Uri notificationSound = Uri.parse("android.resource://" + this.getPackageName() + "/" + R.raw.notification2);
+        Uri notificationSound = Uri.parse("android.resource://" + this.getPackageName() + "/" + R.raw.notification);
         NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Example Service Channel", NotificationManager.IMPORTANCE_HIGH);
         AudioAttributes audioAttributes = serviceChannel.getAudioAttributes();
 
@@ -129,9 +129,15 @@ public class MainActivity extends AppCompatActivity
         NavigationUI.setupWithNavController(navView, navController);
 
         createNotificationChannel();
-
+        initDirectoryList();
 
         //mediaController = new MediaController(context, (Token) intent.getParcelableExtra("sessionToken")); TODO
+    }
+
+    protected void initDirectoryList()
+    {
+        View list = findViewById(R.id.list_view);
+        // TODO add items
     }
 
     @Override

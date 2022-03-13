@@ -8,6 +8,7 @@
     android:paddingTop="?attr/actionBarSize">
 
     <Button
+        style="@style/button_play"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="togglePlayback"
