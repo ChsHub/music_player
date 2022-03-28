@@ -26,6 +26,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -136,7 +137,8 @@ public class MainActivity extends AppCompatActivity
 
     protected void initDirectoryList()
     {
-        View list = findViewById(R.id.list_view);
+        RecyclerView list = findViewById(R.id.track_list);
+
         // TODO add items
     }
 
