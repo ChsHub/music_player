@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -27,17 +28,13 @@
         app:layout_constraintRight_toRightOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
-    <TextView
-        android:id="@+id/test_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/track_list"
-        android:padding="4dp"
-        android:clipToPadding="false"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="287dp"
+        android:clipToPadding="false"
+        android:padding="4dp"
+        tools:listitem="@layout/track_item" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
