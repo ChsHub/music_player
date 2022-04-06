@@ -26,11 +26,13 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static android.util.Log.i;
 
@@ -138,9 +140,11 @@ public class MainActivity extends AppCompatActivity
 
     protected void initDirectoryList()
     {
-        RecyclerView list = findViewById(R.id.track_list);
-
-        // TODO add items
+        RecyclerView recyclerView = findViewById(R.id.track_list);
+        List<TrackItem> trackList = generateTrackList(30);
+        recyclerView.setAdapter(new TrackListAdapter(trackList));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true); // Optimized performance, if Recycler size is fixed
     }
 
     @Override
@@ -151,8 +155,7 @@ public class MainActivity extends AppCompatActivity
             Intent playerIntent = new Intent(this, PlayerService.class);
             Uri uri = null;
 
-            switch (intent.getAction())
-            {
+            switch (intent.getAction()) {
                 case Intent.ACTION_SEND:
                     uri = handleSend(intent); // Handle single audio being sent
                     break;
@@ -163,8 +166,7 @@ public class MainActivity extends AppCompatActivity
                     uri = intent.getData();
                     break;
             }
-            if (uri != null)
-            {
+            if (uri != null) {
                 // Start music service, with attached intent
                 // https://developer.android.com/guide/components/services?hl=en#LifecycleCallbacks
                 playerIntent.putExtra(PlayerService.URI_EXTRA, uri);
@@ -216,5 +218,20 @@ public class MainActivity extends AppCompatActivity
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Generate test data
+     * TODO replace with directory navigation
+     */
+    protected List<TrackItem> generateTrackList(int size)
+    {
+        ArrayList<TrackItem> list = new ArrayList<TrackItem>();
+
+        for (int i = 0; i < size; i++)
+        {
+            list.add(new TrackItem(R.drawable.ic_home_black_24dp, "Item " + Integer.valueOf(i).toString(), "Line 2"));
+        }
+        return list;
     }
 }
