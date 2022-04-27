@@ -230,7 +230,7 @@ public class MainActivity extends AppCompatActivity
 
         for (int i = 0; i < size; i++)
         {
-            list.add(new TrackItem(R.drawable.ic_home_black_24dp, "Item " + Integer.valueOf(i).toString(), "Line 2"));
+            list.add(new TrackItem(R.drawable.ic_play_black_24dp, "Track " + Integer.valueOf(i).toString(), "Artist"));
         }
         return list;
     }
