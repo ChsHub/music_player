@@ -7,16 +7,19 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.AssetManager;
 import android.media.AudioAttributes;
 import android.media.session.MediaController;
 import android.media.session.MediaSession.Token;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.RequiresApi;
@@ -31,6 +34,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -226,10 +230,23 @@ public class MainActivity extends AppCompatActivity
      */
     protected List<TrackItem> generateTrackList(int size)
     {
-        ArrayList<TrackItem> list = new ArrayList<TrackItem>();
+        String path = Environment.getExternalStorageDirectory().toString() + "/"; // TODO fix file listing
+        AssetManager mgr = getAssets();
+        try {
 
-        for (int i = 0; i < size; i++)
-        {
+            String[] fileList = mgr.list(path);
+            Log.e("FILES", String.valueOf(fileList.length));
+
+            for (String s : fileList) {
+                Log.e("FILE:", path + "/" + s);
+            }
+
+        } catch (IOException e) {
+            Log.v("List error:", "can't list" + path);
+        }
+
+        ArrayList<TrackItem> list = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
             list.add(new TrackItem(R.drawable.ic_play_black_24dp, "Track " + Integer.valueOf(i).toString(), "Artist"));
         }
         return list;
